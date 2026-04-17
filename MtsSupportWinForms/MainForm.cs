@@ -50,7 +50,7 @@ namespace MtsSupportWinForms
             sidebar.Controls.Add(userInfo);
             sidebar.Controls.Add(brand);
 
-            var top = new Panel { Dock = DockStyle.Top, Height = 86, Padding = new Padding(24, 22, 24, 18), BackColor = Theme.Surface };
+            var top = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(24, 16, 24, 14), BackColor = Theme.Surface };
             var title = new Label
             {
                 Text = "Главный модуль администратора",
@@ -62,8 +62,8 @@ namespace MtsSupportWinForms
             var subtitle = new Label
             {
                 Text = "Централизованный доступ к клиентам, обращениям, оборудованию, сотрудникам, решениям, отчетам и журналированию.",
-                Dock = DockStyle.Bottom,
-                Height = 24,
+                Dock = DockStyle.Top,
+                Height = 36,
                 Font = new Font("Segoe UI", 10F),
                 ForeColor = Theme.Muted
             };
