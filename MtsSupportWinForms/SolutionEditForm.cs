@@ -9,7 +9,6 @@ namespace MtsSupportWinForms
         private readonly int? _solutionId;
         private readonly UserRole _role;
         private readonly bool _readOnlyView;
-        private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly ComboBox _cbEmployee = Theme.CreateComboBox(320);
         private readonly TextBox _txtTitle = Theme.CreateTextBox(320);
         private readonly TextBox _txtSteps = Theme.CreateTextBox(320);
@@ -32,14 +31,12 @@ namespace MtsSupportWinForms
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.Controls.Add(new Label { Text = "Код решения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
-            layout.Controls.Add(_lblId, 1, 0);
-            layout.Controls.Add(new Label { Text = "Заголовок", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
-            layout.Controls.Add(_txtTitle, 1, 1);
-            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
-            layout.Controls.Add(_cbEmployee, 1, 2);
-            layout.Controls.Add(new Label { Text = "Шаги решения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
-            layout.Controls.Add(_txtSteps, 1, 3);
+            layout.Controls.Add(new Label { Text = "Заголовок", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
+            layout.Controls.Add(_txtTitle, 1, 0);
+            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
+            layout.Controls.Add(_cbEmployee, 1, 1);
+            layout.Controls.Add(new Label { Text = "Шаги решения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
+            layout.Controls.Add(_txtSteps, 1, 2);
             card.Controls.Add(layout);
 
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 52, FlowDirection = FlowDirection.RightToLeft };
@@ -68,15 +65,10 @@ namespace MtsSupportWinForms
                 if (table.Rows.Count == 1)
                 {
                     var row = table.Rows[0];
-                    _lblId.Text = row["solution_id"].ToString();
                     _txtTitle.Text = row["title"].ToString();
                     _txtSteps.Text = row["steps"].ToString();
                     _cbEmployee.SelectedValue = Convert.ToInt32(row["employee_id"]);
                 }
-            }
-            else
-            {
-                _lblId.Text = Db.NextId("Solution", "solution_id").ToString();
             }
         }
 
@@ -120,8 +112,9 @@ namespace MtsSupportWinForms
                 }
                 else
                 {
+                    var nextId = Db.NextId("Solution", "solution_id");
                     Db.Execute(@"INSERT INTO Solution (solution_id, employee_id, title, steps) VALUES (@id, @employee_id, @title, @steps)",
-                        new SqlParameter("@id", Convert.ToInt32(_lblId.Text)),
+                        new SqlParameter("@id", nextId),
                         new SqlParameter("@employee_id", Convert.ToInt32(_cbEmployee.SelectedValue)),
                         new SqlParameter("@title", _txtTitle.Text.Trim()),
                         new SqlParameter("@steps", _txtSteps.Text.Trim()));

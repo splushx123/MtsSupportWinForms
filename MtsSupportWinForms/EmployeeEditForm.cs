@@ -9,7 +9,6 @@ namespace MtsSupportWinForms
         private readonly int? _employeeId;
         private readonly UserRole _role;
         private readonly bool _readOnlyView;
-        private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly TextBox _txtFio = Theme.CreateTextBox(320);
         private readonly TextBox _txtPhone = Theme.CreateTextBox(320);
         private readonly ComboBox _cbPosition = Theme.CreateComboBox(320);
@@ -30,14 +29,12 @@ namespace MtsSupportWinForms
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.Controls.Add(new Label { Text = "Код сотрудника", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
-            layout.Controls.Add(_lblId, 1, 0);
-            layout.Controls.Add(new Label { Text = "ФИО", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
-            layout.Controls.Add(_txtFio, 1, 1);
-            layout.Controls.Add(new Label { Text = "Телефон", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
-            layout.Controls.Add(_txtPhone, 1, 2);
-            layout.Controls.Add(new Label { Text = "Должность", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
-            layout.Controls.Add(_cbPosition, 1, 3);
+            layout.Controls.Add(new Label { Text = "ФИО", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
+            layout.Controls.Add(_txtFio, 1, 0);
+            layout.Controls.Add(new Label { Text = "Телефон", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
+            layout.Controls.Add(_txtPhone, 1, 1);
+            layout.Controls.Add(new Label { Text = "Должность", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
+            layout.Controls.Add(_cbPosition, 1, 2);
             card.Controls.Add(layout);
 
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 52, FlowDirection = FlowDirection.RightToLeft };
@@ -66,15 +63,10 @@ namespace MtsSupportWinForms
                 if (table.Rows.Count == 1)
                 {
                     var row = table.Rows[0];
-                    _lblId.Text = row["employee_id"].ToString();
                     _txtFio.Text = row["fio"].ToString();
                     _txtPhone.Text = row["phone"].ToString();
                     _cbPosition.SelectedValue = Convert.ToInt32(row["position_id"]);
                 }
-            }
-            else
-            {
-                _lblId.Text = Db.NextId("Employee", "employee_id").ToString();
             }
         }
 
@@ -118,8 +110,9 @@ namespace MtsSupportWinForms
                 }
                 else
                 {
+                    var nextId = Db.NextId("Employee", "employee_id");
                     Db.Execute(@"INSERT INTO Employee (employee_id, fio, phone, position_id) VALUES (@id, @fio, @phone, @position_id)",
-                        new SqlParameter("@id", Convert.ToInt32(_lblId.Text)),
+                        new SqlParameter("@id", nextId),
                         new SqlParameter("@fio", _txtFio.Text.Trim()),
                         new SqlParameter("@phone", _txtPhone.Text.Trim()),
                         new SqlParameter("@position_id", Convert.ToInt32(_cbPosition.SelectedValue)));

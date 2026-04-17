@@ -11,7 +11,6 @@ namespace MtsSupportWinForms
         private readonly UserRole _role;
         private readonly bool _readOnlyView;
 
-        private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly ComboBox _cbClient = Theme.CreateComboBox(340);
         private readonly ComboBox _cbEmployee = Theme.CreateComboBox(340);
         private readonly ComboBox _cbStatus = Theme.CreateComboBox(340);
@@ -37,19 +36,25 @@ namespace MtsSupportWinForms
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            var lblStatus = new Label { Text = "Статус", AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
 
-            layout.Controls.Add(new Label { Text = "Код обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
-            layout.Controls.Add(_lblId, 1, 0);
-            layout.Controls.Add(new Label { Text = "Клиент", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
-            layout.Controls.Add(_cbClient, 1, 1);
-            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
-            layout.Controls.Add(_cbEmployee, 1, 2);
-            layout.Controls.Add(new Label { Text = "Статус", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
-            layout.Controls.Add(_cbStatus, 1, 3);
-            layout.Controls.Add(new Label { Text = "Описание", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 4);
-            layout.Controls.Add(_txtDescription, 1, 4);
-            layout.Controls.Add(new Label { Text = "Дата обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 5);
-            layout.Controls.Add(_dtRequest, 1, 5);
+            layout.Controls.Add(new Label { Text = "Клиент", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
+            layout.Controls.Add(_cbClient, 1, 0);
+            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
+            layout.Controls.Add(_cbEmployee, 1, 1);
+            layout.Controls.Add(lblStatus, 0, 2);
+            layout.Controls.Add(_cbStatus, 1, 2);
+            layout.Controls.Add(new Label { Text = "Описание", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
+            layout.Controls.Add(_txtDescription, 1, 3);
+            layout.Controls.Add(new Label { Text = "Дата обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 4);
+            layout.Controls.Add(_dtRequest, 1, 4);
+
+            if (!_requestId.HasValue)
+            {
+                lblStatus.Visible = false;
+                _cbStatus.Visible = false;
+                layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
+            }
 
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 52, FlowDirection = FlowDirection.RightToLeft };
             var btnSave = Theme.CreatePrimaryButton("Сохранить", 120);
@@ -80,7 +85,6 @@ namespace MtsSupportWinForms
                 if (table.Rows.Count == 1)
                 {
                     var row = table.Rows[0];
-                    _lblId.Text = row["request_id"].ToString();
                     _cbClient.SelectedValue = Convert.ToInt32(row["client_id"]);
                     if (row["employee_id"] != DBNull.Value) _cbEmployee.SelectedValue = Convert.ToInt32(row["employee_id"]);
                     _cbStatus.SelectedValue = Convert.ToInt32(row["status_id"]);
@@ -90,8 +94,8 @@ namespace MtsSupportWinForms
             }
             else
             {
-                _lblId.Text = Db.NextId("Request", "request_id").ToString();
                 _dtRequest.Value = DateTime.Now;
+                _cbStatus.SelectedValue = GetInWorkStatusId();
             }
         }
 
@@ -140,11 +144,17 @@ namespace MtsSupportWinForms
                 }
                 else
                 {
+                    var nextId = Db.NextId("Request", "request_id");
+                    var defaultStatusId = UiHelpers.ComboValue(_cbStatus);
+                    if (!defaultStatusId.HasValue)
+                    {
+                        defaultStatusId = GetInWorkStatusId();
+                    }
                     Db.Execute(@"INSERT INTO Request (request_id, client_id, employee_id, status_id, description, date_request) VALUES (@id, @client_id, @employee_id, @status_id, @description, @date_request)",
-                        new SqlParameter("@id", Convert.ToInt32(_lblId.Text)),
+                        new SqlParameter("@id", nextId),
                         new SqlParameter("@client_id", Convert.ToInt32(_cbClient.SelectedValue)),
                         new SqlParameter("@employee_id", (object)UiHelpers.ComboValue(_cbEmployee) ?? DBNull.Value),
-                        new SqlParameter("@status_id", Convert.ToInt32(_cbStatus.SelectedValue)),
+                        new SqlParameter("@status_id", defaultStatusId.Value),
                         new SqlParameter("@description", _txtDescription.Text.Trim()),
                         new SqlParameter("@date_request", _dtRequest.Value));
                 }
@@ -156,6 +166,16 @@ namespace MtsSupportWinForms
             {
                 MessageBox.Show("Не удалось сохранить обращение.\n" + ex.Message);
             }
+        }
+
+        private int GetInWorkStatusId()
+        {
+            var value = Db.Scalar("SELECT TOP 1 status_id FROM Status WHERE title_status = N'В работе'");
+            if (value == null || value == DBNull.Value)
+            {
+                value = Db.Scalar("SELECT TOP 1 status_id FROM Status ORDER BY status_id");
+            }
+            return Convert.ToInt32(value);
         }
     }
 }
