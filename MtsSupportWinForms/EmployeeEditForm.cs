@@ -8,15 +8,17 @@ namespace MtsSupportWinForms
     {
         private readonly int? _employeeId;
         private readonly UserRole _role;
+        private readonly bool _readOnlyView;
         private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly TextBox _txtFio = Theme.CreateTextBox(320);
         private readonly TextBox _txtPhone = Theme.CreateTextBox(320);
         private readonly ComboBox _cbPosition = Theme.CreateComboBox(320);
 
-        public EmployeeEditForm(int? employeeId, UserRole role)
+        public EmployeeEditForm(int? employeeId, UserRole role, bool readOnlyView = false)
         {
             _employeeId = employeeId;
             _role = role;
+            _readOnlyView = readOnlyView;
             Theme.StyleForm(this);
             Text = employeeId.HasValue ? "Карточка сотрудника" : "Новый сотрудник";
             Width = 620;
@@ -48,7 +50,7 @@ namespace MtsSupportWinForms
 
             Controls.Add(card);
             Controls.Add(buttons);
-            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); };
+            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); ApplyReadOnly(btnSave); };
         }
 
         private void LoadLookups()
@@ -85,6 +87,15 @@ namespace MtsSupportWinForms
                 _txtPhone.ReadOnly = true;
                 _cbPosition.Enabled = false;
             }
+        }
+
+        private void ApplyReadOnly(Button btnSave)
+        {
+            if (!_readOnlyView) return;
+            btnSave.Visible = false;
+            _txtFio.ReadOnly = true;
+            _txtPhone.ReadOnly = true;
+            _cbPosition.Enabled = false;
         }
 
         private void Save()

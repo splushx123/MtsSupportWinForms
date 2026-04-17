@@ -8,15 +8,17 @@ namespace MtsSupportWinForms
     {
         private readonly int? _equipmentId;
         private readonly UserRole _role;
+        private readonly bool _readOnlyView;
         private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly TextBox _txtSerial = Theme.CreateTextBox(320);
         private readonly ComboBox _cbModel = Theme.CreateComboBox(320);
         private readonly ComboBox _cbClient = Theme.CreateComboBox(320);
 
-        public EquipmentEditForm(int? equipmentId, UserRole role)
+        public EquipmentEditForm(int? equipmentId, UserRole role, bool readOnlyView = false)
         {
             _equipmentId = equipmentId;
             _role = role;
+            _readOnlyView = readOnlyView;
             Theme.StyleForm(this);
             Text = equipmentId.HasValue ? "Карточка оборудования" : "Новое оборудование";
             Width = 620;
@@ -48,7 +50,7 @@ namespace MtsSupportWinForms
 
             Controls.Add(card);
             Controls.Add(buttons);
-            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); };
+            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); ApplyReadOnly(btnSave); };
         }
 
         private void LoadLookups()
@@ -86,6 +88,15 @@ namespace MtsSupportWinForms
                 _cbModel.Enabled = false;
                 _cbClient.Enabled = false;
             }
+        }
+
+        private void ApplyReadOnly(Button btnSave)
+        {
+            if (!_readOnlyView) return;
+            btnSave.Visible = false;
+            _txtSerial.ReadOnly = true;
+            _cbModel.Enabled = false;
+            _cbClient.Enabled = false;
         }
 
         private void Save()

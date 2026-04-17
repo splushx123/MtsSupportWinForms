@@ -8,15 +8,17 @@ namespace MtsSupportWinForms
     {
         private readonly int? _solutionId;
         private readonly UserRole _role;
+        private readonly bool _readOnlyView;
         private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly ComboBox _cbEmployee = Theme.CreateComboBox(320);
         private readonly TextBox _txtTitle = Theme.CreateTextBox(320);
         private readonly TextBox _txtSteps = Theme.CreateTextBox(320);
 
-        public SolutionEditForm(int? solutionId, UserRole role)
+        public SolutionEditForm(int? solutionId, UserRole role, bool readOnlyView = false)
         {
             _solutionId = solutionId;
             _role = role;
+            _readOnlyView = readOnlyView;
             Theme.StyleForm(this);
             Text = solutionId.HasValue ? "Карточка решения" : "Новое решение";
             Width = 650;
@@ -50,7 +52,7 @@ namespace MtsSupportWinForms
 
             Controls.Add(card);
             Controls.Add(buttons);
-            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); };
+            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); ApplyReadOnly(btnSave); };
         }
 
         private void LoadLookups()
@@ -87,6 +89,15 @@ namespace MtsSupportWinForms
                 _txtSteps.ReadOnly = true;
                 _cbEmployee.Enabled = false;
             }
+        }
+
+        private void ApplyReadOnly(Button btnSave)
+        {
+            if (!_readOnlyView) return;
+            btnSave.Visible = false;
+            _txtTitle.ReadOnly = true;
+            _txtSteps.ReadOnly = true;
+            _cbEmployee.Enabled = false;
         }
 
         private void Save()
