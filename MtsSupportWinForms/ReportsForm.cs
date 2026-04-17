@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace MtsSupportWinForms
@@ -135,24 +136,105 @@ ORDER BY s.solution_id DESC");
 
             using (var dialog = new SaveFileDialog())
             {
-                dialog.Filter = "CSV files|*.csv|Text files|*.txt";
+                dialog.Filter = "CSV files|*.csv|Excel files|*.xls|Text files|*.txt|JSON files|*.json";
                 dialog.FileName = "report.csv";
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-                var lines = new List<string>();
-                var headers = _grid.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
-                var separator = Path.GetExtension(dialog.FileName).Equals(".txt", StringComparison.OrdinalIgnoreCase) ? "\t" : ";";
-                lines.Add(string.Join(separator, headers));
-                foreach (DataGridViewRow row in _grid.Rows)
+                var extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
+                if (extension == ".csv" || extension == ".txt")
                 {
-                    if (row.IsNewRow) continue;
-                    var cells = row.Cells.Cast<DataGridViewCell>().Select(c => ((c.Value ?? string.Empty).ToString() ?? string.Empty).Replace(";", ","));
-                    lines.Add(string.Join(separator, cells));
+                    var separator = extension == ".txt" ? "\t" : ";";
+                    var lines = BuildDelimitedLines(separator);
+                    File.WriteAllLines(dialog.FileName, lines, new UTF8Encoding(true));
                 }
-                File.WriteAllLines(dialog.FileName, lines);
+                else if (extension == ".xls")
+                {
+                    File.WriteAllText(dialog.FileName, BuildHtmlTable(), new UTF8Encoding(true));
+                }
+                else if (extension == ".json")
+                {
+                    File.WriteAllText(dialog.FileName, BuildJson(), new UTF8Encoding(true));
+                }
+                else
+                {
+                    MessageBox.Show("Неподдерживаемый формат экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 LogService.Log("Экспорт отчета", dialog.FileName);
                 MessageBox.Show("Экспорт завершен.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private List<string> BuildDelimitedLines(string separator)
+        {
+            var lines = new List<string>();
+            var headers = _grid.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
+            lines.Add(string.Join(separator, headers));
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                if (row.IsNewRow) continue;
+                var cells = row.Cells.Cast<DataGridViewCell>().Select(c =>
+                {
+                    var text = (c.Value ?? string.Empty).ToString() ?? string.Empty;
+                    text = text.Replace("\r", " ").Replace("\n", " ");
+                    if (separator == ";") text = text.Replace(";", ",");
+                    return text;
+                });
+                lines.Add(string.Join(separator, cells));
+            }
+            return lines;
+        }
+
+        private string BuildHtmlTable()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("<html><head><meta charset=\"utf-8\"></head><body><table border=\"1\">");
+            sb.AppendLine("<tr>");
+            foreach (DataGridViewColumn column in _grid.Columns)
+            {
+                sb.Append("<th>").Append(System.Security.SecurityElement.Escape(column.HeaderText)).AppendLine("</th>");
+            }
+            sb.AppendLine("</tr>");
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                if (row.IsNewRow) continue;
+                sb.AppendLine("<tr>");
+                foreach (DataGridViewCell cell in row.Cells)
+                {
+                    var text = (cell.Value ?? string.Empty).ToString() ?? string.Empty;
+                    sb.Append("<td>").Append(System.Security.SecurityElement.Escape(text)).AppendLine("</td>");
+                }
+                sb.AppendLine("</tr>");
+            }
+            sb.AppendLine("</table></body></html>");
+            return sb.ToString();
+        }
+
+        private string BuildJson()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("[");
+            var rows = _grid.Rows.Cast<DataGridViewRow>().Where(r => !r.IsNewRow).ToList();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                sb.Append("  {");
+                for (int j = 0; j < _grid.Columns.Count; j++)
+                {
+                    var column = _grid.Columns[j];
+                    var cell = row.Cells[j];
+                    var value = (cell.Value ?? string.Empty).ToString() ?? string.Empty;
+                    value = value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", " ").Replace("\n", " ");
+                    sb.Append("\"").Append(column.HeaderText.Replace("\"", "\\\"")).Append("\":\"").Append(value).Append("\"");
+                    if (j < _grid.Columns.Count - 1) sb.Append(",");
+                }
+                sb.Append("}");
+                if (i < rows.Count - 1) sb.Append(",");
+                sb.AppendLine();
+            }
+            sb.Append("]");
+            return sb.ToString();
         }
     }
 }
