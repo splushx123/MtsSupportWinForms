@@ -27,30 +27,9 @@ namespace MtsSupportWinForms
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = Color.White
             };
-            var userInfo = new Label
-            {
-                Text = _user.FullName + "\n" + _user.Email,
-                Dock = DockStyle.Top,
-                Height = 60,
-                Font = new Font("Segoe UI", 10F),
-                ForeColor = Color.FromArgb(223, 227, 235)
-            };
-            var nav = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(0, 20, 0, 0) };
-
-            AddNavButton(nav, "Клиенты", delegate { OpenModule("Клиенты", new ClientsForm(_user)); }, true);
-            AddNavButton(nav, "Обращения", delegate { OpenModule("Обращения", new RequestsForm(_user)); }, true);
-            AddNavButton(nav, "Оборудование", delegate { OpenModule("Оборудование", new EquipmentForm(_user)); }, _user.Role != UserRole.OperatorLine1);
-            AddNavButton(nav, "Сотрудники", delegate { OpenModule("Сотрудники", new EmployeesForm(_user)); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Решения", delegate { OpenModule("Решения", new SolutionsForm(_user)); }, _user.Role != UserRole.OperatorLine1);
-            AddNavButton(nav, "Отчеты", delegate { OpenModule("Отчеты", new ReportsForm()); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Журнал", delegate { OpenModule("Журнал", new ActivityLogForm()); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Выход", delegate { Close(); }, true);
-
-            sidebar.Controls.Add(nav);
-            sidebar.Controls.Add(userInfo);
             sidebar.Controls.Add(brand);
 
-            var top = new Panel { Dock = DockStyle.Top, Height = 86, Padding = new Padding(24, 22, 24, 18), BackColor = Theme.Surface };
+            var top = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(24, 16, 24, 14), BackColor = Theme.Surface };
             var title = new Label
             {
                 Text = "Главный модуль администратора",
@@ -62,8 +41,8 @@ namespace MtsSupportWinForms
             var subtitle = new Label
             {
                 Text = "Централизованный доступ к клиентам, обращениям, оборудованию, сотрудникам, решениям, отчетам и журналированию.",
-                Dock = DockStyle.Bottom,
-                Height = 24,
+                Dock = DockStyle.Top,
+                Height = 36,
                 Font = new Font("Segoe UI", 10F),
                 ForeColor = Theme.Muted
             };
@@ -86,14 +65,6 @@ namespace MtsSupportWinForms
             Controls.Add(top);
             Controls.Add(sidebar);
             Load += delegate { FillStats(); FillTiles(); };
-        }
-
-        private void AddNavButton(FlowLayoutPanel panel, string text, Action action, bool visible)
-        {
-            if (!visible) return;
-            var btn = Theme.CreateNavButton(text);
-            btn.Click += delegate { action(); };
-            panel.Controls.Add(btn);
         }
 
         private void FillStats()
