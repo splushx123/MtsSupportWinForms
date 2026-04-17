@@ -1,0 +1,148 @@
+using System;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace MtsSupportWinForms
+{
+    public class RequestEditForm : Form
+    {
+        private readonly int? _requestId;
+        private readonly UserRole _role;
+
+        private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
+        private readonly ComboBox _cbClient = Theme.CreateComboBox(340);
+        private readonly ComboBox _cbEmployee = Theme.CreateComboBox(340);
+        private readonly ComboBox _cbStatus = Theme.CreateComboBox(340);
+        private readonly TextBox _txtDescription = Theme.CreateTextBox(340);
+        private readonly DateTimePicker _dtRequest = new DateTimePicker { Width = 340, Format = DateTimePickerFormat.Custom, CustomFormat = "dd.MM.yyyy HH:mm" };
+
+        public RequestEditForm(int? requestId, UserRole role)
+        {
+            _requestId = requestId;
+            _role = role;
+            Theme.StyleForm(this);
+            Text = requestId.HasValue ? "Карточка обращения" : "Новое обращение";
+            Width = 700;
+            Height = 430;
+            StartPosition = FormStartPosition.CenterParent;
+            _txtDescription.Multiline = true;
+            _txtDescription.Height = 110;
+
+            var card = Theme.CreateCard();
+            card.Dock = DockStyle.Fill;
+
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            layout.Controls.Add(new Label { Text = "Код обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
+            layout.Controls.Add(_lblId, 1, 0);
+            layout.Controls.Add(new Label { Text = "Клиент", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
+            layout.Controls.Add(_cbClient, 1, 1);
+            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 2);
+            layout.Controls.Add(_cbEmployee, 1, 2);
+            layout.Controls.Add(new Label { Text = "Статус", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
+            layout.Controls.Add(_cbStatus, 1, 3);
+            layout.Controls.Add(new Label { Text = "Описание", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 4);
+            layout.Controls.Add(_txtDescription, 1, 4);
+            layout.Controls.Add(new Label { Text = "Дата обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 5);
+            layout.Controls.Add(_dtRequest, 1, 5);
+
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 52, FlowDirection = FlowDirection.RightToLeft };
+            var btnSave = Theme.CreatePrimaryButton("Сохранить", 120);
+            var btnClose = Theme.CreateSecondaryButton("Закрыть", 120);
+            btnSave.Click += delegate { Save(); };
+            btnClose.Click += delegate { Close(); };
+            buttons.Controls.Add(btnSave);
+            buttons.Controls.Add(btnClose);
+
+            card.Controls.Add(layout);
+            Controls.Add(card);
+            Controls.Add(buttons);
+            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); };
+        }
+
+        private void LoadLookups()
+        {
+            UiHelpers.BindLookup(_cbClient, LookupService.Clients(), "client_id", "fio", false);
+            UiHelpers.BindLookup(_cbEmployee, LookupService.Employees(), "employee_id", "fio", true);
+            UiHelpers.BindLookup(_cbStatus, LookupService.Statuses(), "status_id", "title_status", false);
+        }
+
+        private void LoadData()
+        {
+            if (_requestId.HasValue)
+            {
+                var table = Db.Query("SELECT request_id, client_id, employee_id, status_id, description, date_request FROM Request WHERE request_id = @id", new SqlParameter("@id", _requestId.Value));
+                if (table.Rows.Count == 1)
+                {
+                    var row = table.Rows[0];
+                    _lblId.Text = row["request_id"].ToString();
+                    _cbClient.SelectedValue = Convert.ToInt32(row["client_id"]);
+                    if (row["employee_id"] != DBNull.Value) _cbEmployee.SelectedValue = Convert.ToInt32(row["employee_id"]);
+                    _cbStatus.SelectedValue = Convert.ToInt32(row["status_id"]);
+                    _txtDescription.Text = row["description"].ToString();
+                    if (row["date_request"] != DBNull.Value) _dtRequest.Value = Convert.ToDateTime(row["date_request"]);
+                }
+            }
+            else
+            {
+                _lblId.Text = Db.NextId("Request", "request_id").ToString();
+                _dtRequest.Value = DateTime.Now;
+            }
+        }
+
+        private void ApplyRole(Button btnSave)
+        {
+            if (_role == UserRole.OperatorLine1)
+            {
+                _cbEmployee.Enabled = false;
+            }
+            if (_role == UserRole.SpecialistLine2)
+            {
+                _cbClient.Enabled = false;
+            }
+        }
+
+        private void Save()
+        {
+            if (_cbClient.SelectedValue == null || _cbStatus.SelectedValue == null || string.IsNullOrWhiteSpace(_txtDescription.Text))
+            {
+                MessageBox.Show("Заполните обязательные поля обращения.");
+                return;
+            }
+
+            try
+            {
+                if (_requestId.HasValue)
+                {
+                    Db.Execute(@"UPDATE Request SET client_id=@client_id, employee_id=@employee_id, status_id=@status_id, description=@description, date_request=@date_request WHERE request_id=@id",
+                        new SqlParameter("@client_id", Convert.ToInt32(_cbClient.SelectedValue)),
+                        new SqlParameter("@employee_id", (object)UiHelpers.ComboValue(_cbEmployee) ?? DBNull.Value),
+                        new SqlParameter("@status_id", Convert.ToInt32(_cbStatus.SelectedValue)),
+                        new SqlParameter("@description", _txtDescription.Text.Trim()),
+                        new SqlParameter("@date_request", _dtRequest.Value),
+                        new SqlParameter("@id", _requestId.Value));
+                }
+                else
+                {
+                    Db.Execute(@"INSERT INTO Request (request_id, client_id, employee_id, status_id, description, date_request) VALUES (@id, @client_id, @employee_id, @status_id, @description, @date_request)",
+                        new SqlParameter("@id", Convert.ToInt32(_lblId.Text)),
+                        new SqlParameter("@client_id", Convert.ToInt32(_cbClient.SelectedValue)),
+                        new SqlParameter("@employee_id", (object)UiHelpers.ComboValue(_cbEmployee) ?? DBNull.Value),
+                        new SqlParameter("@status_id", Convert.ToInt32(_cbStatus.SelectedValue)),
+                        new SqlParameter("@description", _txtDescription.Text.Trim()),
+                        new SqlParameter("@date_request", _dtRequest.Value));
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось сохранить обращение.\n" + ex.Message);
+            }
+        }
+    }
+}

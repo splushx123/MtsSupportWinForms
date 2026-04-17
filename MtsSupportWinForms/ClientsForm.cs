@@ -1,0 +1,107 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace MtsSupportWinForms
+{
+    public class ClientsForm : Form
+    {
+        private readonly UserAccount _user;
+        private readonly DataGridView _grid = new DataGridView { Dock = DockStyle.Fill };
+        private readonly TextBox _txtSearch = Theme.CreateTextBox(260);
+
+        public ClientsForm(UserAccount user)
+        {
+            _user = user;
+            Theme.StyleForm(this);
+            Text = "Клиенты";
+            Width = 1100;
+            Height = 650;
+            StartPosition = FormStartPosition.CenterParent;
+            Theme.StyleGrid(_grid);
+
+            var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 56, Padding = new Padding(10), BackColor = Color.White };
+            top.Controls.Add(new Label { Text = "Поиск клиента:", AutoSize = true, Padding = new Padding(0, 9, 0, 0) });
+            top.Controls.Add(_txtSearch);
+
+            var btnFind = Theme.CreateSecondaryButton("Найти", 100);
+            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
+            var btnAdd = Theme.CreatePrimaryButton("Добавить", 110);
+            var btnEdit = Theme.CreateSecondaryButton("Изменить", 110);
+            var btnDelete = Theme.CreateSecondaryButton("Удалить", 110);
+            var btnCard = Theme.CreateSecondaryButton("Карточка", 110);
+
+            btnFind.Click += delegate { LoadData(); };
+            btnRefresh.Click += delegate { _txtSearch.Clear(); LoadData(); };
+            btnAdd.Click += delegate { OpenEditor(null); };
+            btnEdit.Click += delegate { EditSelected(); };
+            btnCard.Click += delegate { EditSelected(); };
+            btnDelete.Click += delegate { DeleteSelected(); };
+
+            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnCard });
+            Controls.Add(_grid);
+            Controls.Add(top);
+            Load += delegate { LoadData(); };
+        }
+
+        private void LoadData()
+        {
+            var text = "%" + _txtSearch.Text.Trim() + "%";
+            _grid.DataSource = Db.Query(@"
+SELECT client_id AS [Код], fio AS [ФИО], phone AS [Телефон], address AS [Адрес], email AS [Почта]
+FROM Client
+WHERE fio LIKE @search OR phone LIKE @search OR ISNULL(email,'') LIKE @search
+ORDER BY fio", new SqlParameter("@search", text));
+        }
+
+        private int? SelectedId()
+        {
+            if (_grid.CurrentRow == null) return null;
+            return Convert.ToInt32(_grid.CurrentRow.Cells[0].Value);
+        }
+
+        private void EditSelected()
+        {
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            OpenEditor(id.Value);
+        }
+
+        private void OpenEditor(int? id)
+        {
+            using (var form = new ClientEditForm(id, _user.Role))
+            {
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    LoadData();
+                }
+            }
+        }
+
+        private void DeleteSelected()
+        {
+            if (_user.Role == UserRole.SpecialistLine2)
+            {
+                MessageBox.Show("У этой роли нет прав на удаление клиентов.");
+                return;
+            }
+
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            if (MessageBox.Show("Удалить клиента?", "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+
+            try
+            {
+                Db.Execute("DELETE FROM Client WHERE client_id = @id", new SqlParameter("@id", id.Value));
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось удалить клиента.\n" + ex.Message);
+            }
+        }
+    }
+}
