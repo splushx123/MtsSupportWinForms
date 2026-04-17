@@ -17,11 +17,21 @@ namespace MtsSupportWinForms
                     "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             };
 
-            using (var login = new LoginForm())
+            while (true)
             {
-                if (login.ShowDialog() == DialogResult.OK && login.CurrentUser != null)
+                using (var login = new LoginForm())
                 {
-                    Application.Run(new MainForm(login.CurrentUser));
+                    if (login.ShowDialog() != DialogResult.OK || login.CurrentUser == null)
+                    {
+                        break;
+                    }
+
+                    var mainForm = new MainForm(login.CurrentUser);
+                    Application.Run(mainForm);
+                    if (!mainForm.ReturnToLogin)
+                    {
+                        break;
+                    }
                 }
             }
         }
