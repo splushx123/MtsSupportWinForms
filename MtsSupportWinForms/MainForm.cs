@@ -28,8 +28,9 @@ namespace MtsSupportWinForms
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = Color.White
             };
-            var btnLogout = Theme.CreateNavButton("Выход");
+            var btnLogout = Theme.CreatePrimaryButton("Выход", 210);
             btnLogout.Dock = DockStyle.Bottom;
+            btnLogout.Margin = new Padding(0, 0, 0, 8);
             btnLogout.Click += delegate
             {
                 ReturnToLogin = true;
