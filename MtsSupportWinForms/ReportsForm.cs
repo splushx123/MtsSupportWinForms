@@ -37,12 +37,12 @@ namespace MtsSupportWinForms
             _chkOnlyActive.AutoSize = true;
             _chkOnlyActive.Padding = new Padding(0, 10, 0, 0);
 
-            var btnBuild = Theme.CreatePrimaryButton("Сформировать", 140);
-            var btnExport = Theme.CreateSecondaryButton("Экспорт CSV", 130);
+            var btnExport = Theme.CreateSecondaryButton("Экспорт", 130);
             var btnClose = Theme.CreateSecondaryButton("Закрыть", 120);
-            btnBuild.Click += delegate { BuildReport(); };
-            btnExport.Click += delegate { ExportCsv(); };
+            btnExport.Click += delegate { ExportReport(); };
             btnClose.Click += delegate { Close(); };
+            _cbReport.SelectedIndexChanged += delegate { BuildReport(); };
+            _chkOnlyActive.CheckedChanged += delegate { BuildReport(); };
 
             _lblSummary.AutoSize = true;
             _lblSummary.Padding = new Padding(0, 10, 0, 0);
@@ -51,7 +51,6 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Тип отчета:", AutoSize = true, Padding = new Padding(0, 10, 0, 0) });
             top.Controls.Add(_cbReport);
             top.Controls.Add(_chkOnlyActive);
-            top.Controls.Add(btnBuild);
             top.Controls.Add(btnExport);
             top.Controls.Add(btnClose);
             top.Controls.Add(_lblSummary);
@@ -101,7 +100,7 @@ ORDER BY [Количество обращений] DESC, e.fio");
         {
             var onlyActive = _chkOnlyActive.Checked ? "WHERE s.title_status <> N'Закрыто'" : string.Empty;
             _grid.DataSource = Db.Query(@"
-SELECT r.request_id AS [Код обращения], c.fio AS [Клиент], s.title_status AS [Статус], r.date_request AS [Дата обращения],
+SELECT c.fio AS [Клиент], s.title_status AS [Статус], r.date_request AS [Дата обращения],
        DATEDIFF(DAY, r.date_request, GETDATE()) AS [Дней с момента создания]
 FROM Request r
 INNER JOIN Client c ON c.client_id = r.client_id
@@ -114,7 +113,7 @@ ORDER BY r.date_request DESC");
         private void ShowSolutionReport()
         {
             _grid.DataSource = Db.Query(@"
-SELECT s.solution_id AS [Код], s.title AS [Заголовок], e.fio AS [Сотрудник]
+SELECT s.title AS [Заголовок], e.fio AS [Сотрудник]
 FROM Solution s
 LEFT JOIN Employee e ON e.employee_id = s.employee_id
 ORDER BY s.solution_id DESC");
@@ -126,22 +125,29 @@ ORDER BY s.solution_id DESC");
             _lblSummary.Text = text + " Строк в отчете: " + _grid.Rows.Count;
         }
 
-        private void ExportCsv()
+        private void ExportReport()
         {
+            if (_grid.Columns.Count == 0)
+            {
+                MessageBox.Show("Нет данных для экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             using (var dialog = new SaveFileDialog())
             {
-                dialog.Filter = "CSV files|*.csv";
+                dialog.Filter = "CSV files|*.csv|Text files|*.txt";
                 dialog.FileName = "report.csv";
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
                 var lines = new List<string>();
                 var headers = _grid.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
-                lines.Add(string.Join(";", headers));
+                var separator = Path.GetExtension(dialog.FileName).Equals(".txt", StringComparison.OrdinalIgnoreCase) ? "\t" : ";";
+                lines.Add(string.Join(separator, headers));
                 foreach (DataGridViewRow row in _grid.Rows)
                 {
                     if (row.IsNewRow) continue;
                     var cells = row.Cells.Cast<DataGridViewCell>().Select(c => ((c.Value ?? string.Empty).ToString() ?? string.Empty).Replace(";", ","));
-                    lines.Add(string.Join(";", cells));
+                    lines.Add(string.Join(separator, cells));
                 }
                 File.WriteAllLines(dialog.FileName, lines);
                 LogService.Log("Экспорт отчета", dialog.FileName);
