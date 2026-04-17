@@ -107,6 +107,19 @@ namespace MtsSupportWinForms
             button.FlatAppearance.BorderColor = Border;
             button.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             button.Cursor = Cursors.Hand;
+            button.MouseEnter += delegate
+            {
+                button.BackColor = Primary;
+                button.ForeColor = Color.White;
+                button.FlatAppearance.BorderSize = 0;
+            };
+            button.MouseLeave += delegate
+            {
+                button.BackColor = Surface;
+                button.ForeColor = Text;
+                button.FlatAppearance.BorderSize = 1;
+                button.FlatAppearance.BorderColor = Border;
+            };
             return button;
         }
 
