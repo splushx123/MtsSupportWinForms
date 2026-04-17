@@ -36,25 +36,20 @@ namespace MtsSupportWinForms
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            var lblStatus = new Label { Text = "Статус", AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
-
-            layout.Controls.Add(new Label { Text = "Клиент", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 0);
-            layout.Controls.Add(_cbClient, 1, 0);
-            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 1);
-            layout.Controls.Add(_cbEmployee, 1, 1);
-            layout.Controls.Add(lblStatus, 0, 2);
-            layout.Controls.Add(_cbStatus, 1, 2);
-            layout.Controls.Add(new Label { Text = "Описание", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 3);
-            layout.Controls.Add(_txtDescription, 1, 3);
-            layout.Controls.Add(new Label { Text = "Дата обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, 4);
-            layout.Controls.Add(_dtRequest, 1, 4);
-
-            if (!_requestId.HasValue)
+            var row = 0;
+            layout.Controls.Add(new Label { Text = "Клиент", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, row);
+            layout.Controls.Add(_cbClient, 1, row++);
+            layout.Controls.Add(new Label { Text = "Сотрудник", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, row);
+            layout.Controls.Add(_cbEmployee, 1, row++);
+            if (_requestId.HasValue)
             {
-                lblStatus.Visible = false;
-                _cbStatus.Visible = false;
-                layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
+                layout.Controls.Add(new Label { Text = "Статус", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, row);
+                layout.Controls.Add(_cbStatus, 1, row++);
             }
+            layout.Controls.Add(new Label { Text = "Описание", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, row);
+            layout.Controls.Add(_txtDescription, 1, row++);
+            layout.Controls.Add(new Label { Text = "Дата обращения", AutoSize = true, Padding = new Padding(0, 8, 0, 0) }, 0, row);
+            layout.Controls.Add(_dtRequest, 1, row);
 
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 52, FlowDirection = FlowDirection.RightToLeft };
             var btnSave = Theme.CreatePrimaryButton("Сохранить", 120);
