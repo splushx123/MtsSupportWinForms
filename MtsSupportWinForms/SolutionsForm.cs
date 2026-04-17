@@ -25,21 +25,18 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Поиск:", AutoSize = true, Padding = new Padding(0, 9, 0, 0) });
             top.Controls.Add(_txtSearch);
 
-            var btnFind = Theme.CreateSecondaryButton("Найти", 95);
-            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
             var btnAdd = Theme.CreatePrimaryButton("Добавить", 110);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 110);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 110);
 
-            btnFind.Click += delegate { LoadData(); };
-            btnRefresh.Click += delegate { _txtSearch.Clear(); LoadData(); };
+            _txtSearch.TextChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
             btnCard.Click += delegate { EditSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadData(); };
@@ -47,13 +44,15 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var text = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var text = value.Length == 0 ? "%" : value + "%";
             _grid.DataSource = Db.Query(@"
 SELECT s.solution_id AS [Код], s.title AS [Заголовок], e.fio AS [Сотрудник], s.steps AS [Шаги]
 FROM Solution s
 LEFT JOIN Employee e ON e.employee_id = s.employee_id
 WHERE s.title LIKE @search OR s.steps LIKE @search OR ISNULL(e.fio,'') LIKE @search
 ORDER BY s.solution_id DESC", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()
