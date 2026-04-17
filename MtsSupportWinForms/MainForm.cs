@@ -83,8 +83,14 @@ namespace MtsSupportWinForms
             AddStatCard("Клиенты", SafeCount("SELECT COUNT(*) FROM Client").ToString(), Theme.Primary);
             AddStatCard("Обращения", SafeCount("SELECT COUNT(*) FROM Request").ToString(), Theme.Success);
             AddStatCard("Открытые заявки", SafeCount("SELECT COUNT(*) FROM Request r INNER JOIN Status s ON s.status_id=r.status_id WHERE s.title_status <> N'Закрыто'").ToString(), Theme.Warning);
-            AddStatCard("Решения", SafeCount("SELECT COUNT(*) FROM Solution").ToString(), Color.FromArgb(56, 96, 178));
-            AddStatCard("Сотрудники", SafeCount("SELECT COUNT(*) FROM Employee").ToString(), Color.FromArgb(126, 87, 194));
+            if (_user.Role != UserRole.OperatorLine1)
+            {
+                AddStatCard("Решения", SafeCount("SELECT COUNT(*) FROM Solution").ToString(), Color.FromArgb(56, 96, 178));
+            }
+            if (_user.Role == UserRole.Administrator)
+            {
+                AddStatCard("Сотрудники", SafeCount("SELECT COUNT(*) FROM Employee").ToString(), Color.FromArgb(126, 87, 194));
+            }
         }
 
         private void FillTiles()
