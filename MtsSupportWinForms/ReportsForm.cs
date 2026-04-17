@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace MtsSupportWinForms
@@ -37,12 +38,12 @@ namespace MtsSupportWinForms
             _chkOnlyActive.AutoSize = true;
             _chkOnlyActive.Padding = new Padding(0, 10, 0, 0);
 
-            var btnBuild = Theme.CreatePrimaryButton("Сформировать", 140);
-            var btnExport = Theme.CreateSecondaryButton("Экспорт CSV", 130);
+            var btnExport = Theme.CreateSecondaryButton("Экспорт", 130);
             var btnClose = Theme.CreateSecondaryButton("Закрыть", 120);
-            btnBuild.Click += delegate { BuildReport(); };
-            btnExport.Click += delegate { ExportCsv(); };
+            btnExport.Click += delegate { ExportReport(); };
             btnClose.Click += delegate { Close(); };
+            _cbReport.SelectedIndexChanged += delegate { BuildReport(); };
+            _chkOnlyActive.CheckedChanged += delegate { BuildReport(); };
 
             _lblSummary.AutoSize = true;
             _lblSummary.Padding = new Padding(0, 10, 0, 0);
@@ -51,7 +52,6 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Тип отчета:", AutoSize = true, Padding = new Padding(0, 10, 0, 0) });
             top.Controls.Add(_cbReport);
             top.Controls.Add(_chkOnlyActive);
-            top.Controls.Add(btnBuild);
             top.Controls.Add(btnExport);
             top.Controls.Add(btnClose);
             top.Controls.Add(_lblSummary);
@@ -101,7 +101,7 @@ ORDER BY [Количество обращений] DESC, e.fio");
         {
             var onlyActive = _chkOnlyActive.Checked ? "WHERE s.title_status <> N'Закрыто'" : string.Empty;
             _grid.DataSource = Db.Query(@"
-SELECT r.request_id AS [Код обращения], c.fio AS [Клиент], s.title_status AS [Статус], r.date_request AS [Дата обращения],
+SELECT c.fio AS [Клиент], s.title_status AS [Статус], r.date_request AS [Дата обращения],
        DATEDIFF(DAY, r.date_request, GETDATE()) AS [Дней с момента создания]
 FROM Request r
 INNER JOIN Client c ON c.client_id = r.client_id
@@ -114,7 +114,7 @@ ORDER BY r.date_request DESC");
         private void ShowSolutionReport()
         {
             _grid.DataSource = Db.Query(@"
-SELECT s.solution_id AS [Код], s.title AS [Заголовок], e.fio AS [Сотрудник]
+SELECT s.title AS [Заголовок], e.fio AS [Сотрудник]
 FROM Solution s
 LEFT JOIN Employee e ON e.employee_id = s.employee_id
 ORDER BY s.solution_id DESC");
@@ -126,27 +126,115 @@ ORDER BY s.solution_id DESC");
             _lblSummary.Text = text + " Строк в отчете: " + _grid.Rows.Count;
         }
 
-        private void ExportCsv()
+        private void ExportReport()
         {
+            if (_grid.Columns.Count == 0)
+            {
+                MessageBox.Show("Нет данных для экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             using (var dialog = new SaveFileDialog())
             {
-                dialog.Filter = "CSV files|*.csv";
+                dialog.Filter = "CSV files|*.csv|Excel files|*.xls|Text files|*.txt|JSON files|*.json";
                 dialog.FileName = "report.csv";
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-                var lines = new List<string>();
-                var headers = _grid.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
-                lines.Add(string.Join(";", headers));
-                foreach (DataGridViewRow row in _grid.Rows)
+                var extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
+                if (extension == ".csv" || extension == ".txt")
                 {
-                    if (row.IsNewRow) continue;
-                    var cells = row.Cells.Cast<DataGridViewCell>().Select(c => ((c.Value ?? string.Empty).ToString() ?? string.Empty).Replace(";", ","));
-                    lines.Add(string.Join(";", cells));
+                    var separator = extension == ".txt" ? "\t" : ";";
+                    var lines = BuildDelimitedLines(separator);
+                    File.WriteAllLines(dialog.FileName, lines, new UTF8Encoding(true));
                 }
-                File.WriteAllLines(dialog.FileName, lines);
+                else if (extension == ".xls")
+                {
+                    File.WriteAllText(dialog.FileName, BuildHtmlTable(), new UTF8Encoding(true));
+                }
+                else if (extension == ".json")
+                {
+                    File.WriteAllText(dialog.FileName, BuildJson(), new UTF8Encoding(true));
+                }
+                else
+                {
+                    MessageBox.Show("Неподдерживаемый формат экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 LogService.Log("Экспорт отчета", dialog.FileName);
                 MessageBox.Show("Экспорт завершен.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private List<string> BuildDelimitedLines(string separator)
+        {
+            var lines = new List<string>();
+            var headers = _grid.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
+            lines.Add(string.Join(separator, headers));
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                if (row.IsNewRow) continue;
+                var cells = row.Cells.Cast<DataGridViewCell>().Select(c =>
+                {
+                    var text = (c.Value ?? string.Empty).ToString() ?? string.Empty;
+                    text = text.Replace("\r", " ").Replace("\n", " ");
+                    if (separator == ";") text = text.Replace(";", ",");
+                    return text;
+                });
+                lines.Add(string.Join(separator, cells));
+            }
+            return lines;
+        }
+
+        private string BuildHtmlTable()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("<html><head><meta charset=\"utf-8\"></head><body><table border=\"1\">");
+            sb.AppendLine("<tr>");
+            foreach (DataGridViewColumn column in _grid.Columns)
+            {
+                sb.Append("<th>").Append(System.Security.SecurityElement.Escape(column.HeaderText)).AppendLine("</th>");
+            }
+            sb.AppendLine("</tr>");
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                if (row.IsNewRow) continue;
+                sb.AppendLine("<tr>");
+                foreach (DataGridViewCell cell in row.Cells)
+                {
+                    var text = (cell.Value ?? string.Empty).ToString() ?? string.Empty;
+                    sb.Append("<td>").Append(System.Security.SecurityElement.Escape(text)).AppendLine("</td>");
+                }
+                sb.AppendLine("</tr>");
+            }
+            sb.AppendLine("</table></body></html>");
+            return sb.ToString();
+        }
+
+        private string BuildJson()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("[");
+            var rows = _grid.Rows.Cast<DataGridViewRow>().Where(r => !r.IsNewRow).ToList();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                sb.Append("  {");
+                for (int j = 0; j < _grid.Columns.Count; j++)
+                {
+                    var column = _grid.Columns[j];
+                    var cell = row.Cells[j];
+                    var value = (cell.Value ?? string.Empty).ToString() ?? string.Empty;
+                    value = value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", " ").Replace("\n", " ");
+                    sb.Append("\"").Append(column.HeaderText.Replace("\"", "\\\"")).Append("\":\"").Append(value).Append("\"");
+                    if (j < _grid.Columns.Count - 1) sb.Append(",");
+                }
+                sb.Append("}");
+                if (i < rows.Count - 1) sb.Append(",");
+                sb.AppendLine();
+            }
+            sb.Append("]");
+            return sb.ToString();
         }
     }
 }

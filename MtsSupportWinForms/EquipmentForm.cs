@@ -25,21 +25,18 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Поиск:", AutoSize = true, Padding = new Padding(0, 9, 0, 0) });
             top.Controls.Add(_txtSearch);
 
-            var btnFind = Theme.CreateSecondaryButton("Найти", 95);
-            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
             var btnAdd = Theme.CreatePrimaryButton("Добавить", 110);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 110);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 110);
 
-            btnFind.Click += delegate { LoadData(); };
-            btnRefresh.Click += delegate { _txtSearch.Clear(); LoadData(); };
+            _txtSearch.TextChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
-            btnCard.Click += delegate { EditSelected(); };
+            btnCard.Click += delegate { OpenCardSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadData(); };
@@ -47,7 +44,8 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var text = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var text = value.Length == 0 ? "%" : value + "%";
             _grid.DataSource = Db.Query(@"
 SELECT e.equipment_id AS [Код], e.serial_number AS [Серийный номер], m.title_model AS [Модель], c.fio AS [Клиент]
 FROM Equipment e
@@ -55,6 +53,7 @@ LEFT JOIN Model m ON m.model_id = e.model_id
 LEFT JOIN Client c ON c.client_id = e.client_id
 WHERE e.serial_number LIKE @search OR ISNULL(m.title_model,'') LIKE @search OR ISNULL(c.fio,'') LIKE @search
 ORDER BY e.equipment_id DESC", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()
@@ -70,9 +69,16 @@ ORDER BY e.equipment_id DESC", new SqlParameter("@search", text));
             OpenEditor(id.Value);
         }
 
-        private void OpenEditor(int? id)
+        private void OpenCardSelected()
         {
-            using (var form = new EquipmentEditForm(id, _user.Role))
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            OpenEditor(id.Value, true);
+        }
+
+        private void OpenEditor(int? id, bool readOnlyView = false)
+        {
+            using (var form = new EquipmentEditForm(id, _user.Role, readOnlyView))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
