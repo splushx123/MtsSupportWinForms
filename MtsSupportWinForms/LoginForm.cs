@@ -33,24 +33,8 @@ namespace MtsSupportWinForms
                 Font = new Font("Segoe UI", 22F, FontStyle.Bold),
                 ForeColor = Color.White
             };
-            var desc = new Label
-            {
-                Text = "Монолитное приложение для автоматизации работы отдела технической поддержки: клиенты, обращения, оборудование, решения, сотрудники и отчеты.",
-                Dock = DockStyle.Top,
-                Height = 120,
-                Font = new Font("Segoe UI", 11F),
-                ForeColor = Color.FromArgb(222, 226, 230)
-            };
-            var bullets = new Label
-            {
-                Text = "- вход по e-mail без пароля\n- проверка подключения к SQL Server\n- ролевая модель доступа\n- журналирование действий\n- экспорт отчетов в CSV",
-                Dock = DockStyle.Top,
-                Height = 130,
-                Font = new Font("Segoe UI", 10F),
-                ForeColor = Color.White
-            };
-            left.Controls.Add(bullets);
-            left.Controls.Add(desc);
+            // На левой панели формы авторизации оставляем только название приложения.
+            left.Controls.Clear();
             left.Controls.Add(appName);
 
             var rightWrap = new Panel { Dock = DockStyle.Fill, Padding = new Padding(42) };

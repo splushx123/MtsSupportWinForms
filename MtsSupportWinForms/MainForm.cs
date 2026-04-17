@@ -9,6 +9,7 @@ namespace MtsSupportWinForms
         private readonly UserAccount _user;
         private readonly FlowLayoutPanel _statsPanel = new FlowLayoutPanel();
         private readonly FlowLayoutPanel _tilesPanel = new FlowLayoutPanel();
+        public bool ReturnToLogin { get; private set; }
 
         public MainForm(UserAccount user)
         {
@@ -27,30 +28,18 @@ namespace MtsSupportWinForms
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = Color.White
             };
-            var userInfo = new Label
+            var btnLogout = Theme.CreatePrimaryButton("Выход", 210);
+            btnLogout.Dock = DockStyle.Bottom;
+            btnLogout.Margin = new Padding(0, 0, 0, 8);
+            btnLogout.Click += delegate
             {
-                Text = _user.FullName + "\n" + _user.Email,
-                Dock = DockStyle.Top,
-                Height = 60,
-                Font = new Font("Segoe UI", 10F),
-                ForeColor = Color.FromArgb(223, 227, 235)
+                ReturnToLogin = true;
+                Close();
             };
-            var nav = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(0, 20, 0, 0) };
-
-            AddNavButton(nav, "Клиенты", delegate { OpenModule("Клиенты", new ClientsForm(_user)); }, true);
-            AddNavButton(nav, "Обращения", delegate { OpenModule("Обращения", new RequestsForm(_user)); }, true);
-            AddNavButton(nav, "Оборудование", delegate { OpenModule("Оборудование", new EquipmentForm(_user)); }, _user.Role != UserRole.OperatorLine1);
-            AddNavButton(nav, "Сотрудники", delegate { OpenModule("Сотрудники", new EmployeesForm(_user)); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Решения", delegate { OpenModule("Решения", new SolutionsForm(_user)); }, _user.Role != UserRole.OperatorLine1);
-            AddNavButton(nav, "Отчеты", delegate { OpenModule("Отчеты", new ReportsForm()); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Журнал", delegate { OpenModule("Журнал", new ActivityLogForm()); }, _user.Role == UserRole.Administrator);
-            AddNavButton(nav, "Выход", delegate { Close(); }, true);
-
-            sidebar.Controls.Add(nav);
-            sidebar.Controls.Add(userInfo);
+            sidebar.Controls.Add(btnLogout);
             sidebar.Controls.Add(brand);
 
-            var top = new Panel { Dock = DockStyle.Top, Height = 86, Padding = new Padding(24, 22, 24, 18), BackColor = Theme.Surface };
+            var top = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(24, 16, 24, 14), BackColor = Theme.Surface };
             var title = new Label
             {
                 Text = "Главный модуль администратора",
@@ -62,8 +51,8 @@ namespace MtsSupportWinForms
             var subtitle = new Label
             {
                 Text = "Централизованный доступ к клиентам, обращениям, оборудованию, сотрудникам, решениям, отчетам и журналированию.",
-                Dock = DockStyle.Bottom,
-                Height = 24,
+                Dock = DockStyle.Top,
+                Height = 36,
                 Font = new Font("Segoe UI", 10F),
                 ForeColor = Theme.Muted
             };
@@ -88,21 +77,14 @@ namespace MtsSupportWinForms
             Load += delegate { FillStats(); FillTiles(); };
         }
 
-        private void AddNavButton(FlowLayoutPanel panel, string text, Action action, bool visible)
-        {
-            if (!visible) return;
-            var btn = Theme.CreateNavButton(text);
-            btn.Click += delegate { action(); };
-            panel.Controls.Add(btn);
-        }
-
         private void FillStats()
         {
             _statsPanel.Controls.Clear();
-            _statsPanel.Controls.Add(Theme.CreateStatCard("Клиенты", SafeCount("SELECT COUNT(*) FROM Client").ToString(), Theme.Primary));
-            _statsPanel.Controls.Add(Theme.CreateStatCard("Обращения", SafeCount("SELECT COUNT(*) FROM Request").ToString(), Theme.Success));
-            _statsPanel.Controls.Add(Theme.CreateStatCard("Открытые заявки", SafeCount("SELECT COUNT(*) FROM Request r INNER JOIN Status s ON s.status_id=r.status_id WHERE s.title_status <> N'Закрыто'").ToString(), Theme.Warning));
-            _statsPanel.Controls.Add(Theme.CreateStatCard("Решения", SafeCount("SELECT COUNT(*) FROM Solution").ToString(), Color.FromArgb(56, 96, 178)));
+            AddStatCard("Клиенты", SafeCount("SELECT COUNT(*) FROM Client").ToString(), Theme.Primary);
+            AddStatCard("Обращения", SafeCount("SELECT COUNT(*) FROM Request").ToString(), Theme.Success);
+            AddStatCard("Открытые заявки", SafeCount("SELECT COUNT(*) FROM Request r INNER JOIN Status s ON s.status_id=r.status_id WHERE s.title_status <> N'Закрыто'").ToString(), Theme.Warning);
+            AddStatCard("Решения", SafeCount("SELECT COUNT(*) FROM Solution").ToString(), Color.FromArgb(56, 96, 178));
+            AddStatCard("Сотрудники", SafeCount("SELECT COUNT(*) FROM Employee").ToString(), Color.FromArgb(126, 87, 194));
         }
 
         private void FillTiles()
@@ -121,8 +103,9 @@ namespace MtsSupportWinForms
         {
             if (!visible) return;
             var card = Theme.CreateCard();
-            card.Width = 310;
+            card.Width = 240;
             card.Height = 172;
+            card.Margin = new Padding(8);
             card.Cursor = Cursors.Hand;
 
             var titleLabel = new Label
@@ -152,6 +135,14 @@ namespace MtsSupportWinForms
             card.Controls.Add(descLabel);
             card.Controls.Add(titleLabel);
             _tilesPanel.Controls.Add(card);
+        }
+
+        private void AddStatCard(string title, string value, Color accent)
+        {
+            var card = Theme.CreateStatCard(title, value, accent);
+            card.Width = 180;
+            card.Margin = new Padding(8);
+            _statsPanel.Controls.Add(card);
         }
 
         private void OpenModule(string moduleName, Form form)
