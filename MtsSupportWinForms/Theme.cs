@@ -70,7 +70,9 @@ namespace MtsSupportWinForms
             button.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             button.Cursor = Cursors.Hand;
 
-            if (string.Equals(text, "Добавить", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(text, "Добавить", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(text, "Создать", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(text, "Обновить", System.StringComparison.OrdinalIgnoreCase))
             {
                 button.BackColor = Surface;
                 button.ForeColor = Text;

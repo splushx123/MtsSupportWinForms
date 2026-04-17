@@ -9,6 +9,7 @@ namespace MtsSupportWinForms
         private readonly UserAccount _user;
         private readonly FlowLayoutPanel _statsPanel = new FlowLayoutPanel();
         private readonly FlowLayoutPanel _tilesPanel = new FlowLayoutPanel();
+        public bool ReturnToLogin { get; private set; }
 
         public MainForm(UserAccount user)
         {
@@ -27,6 +28,14 @@ namespace MtsSupportWinForms
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 ForeColor = Color.White
             };
+            var btnLogout = Theme.CreateNavButton("Выход");
+            btnLogout.Dock = DockStyle.Bottom;
+            btnLogout.Click += delegate
+            {
+                ReturnToLogin = true;
+                Close();
+            };
+            sidebar.Controls.Add(btnLogout);
             sidebar.Controls.Add(brand);
 
             var top = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(24, 16, 24, 14), BackColor = Theme.Surface };
