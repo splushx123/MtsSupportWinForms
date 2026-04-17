@@ -25,21 +25,18 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Поиск:", AutoSize = true, Padding = new Padding(0, 9, 0, 0) });
             top.Controls.Add(_txtSearch);
 
-            var btnFind = Theme.CreateSecondaryButton("Найти", 95);
-            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
             var btnAdd = Theme.CreatePrimaryButton("Добавить", 110);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 110);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 110);
 
-            btnFind.Click += delegate { LoadData(); };
-            btnRefresh.Click += delegate { _txtSearch.Clear(); LoadData(); };
+            _txtSearch.TextChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
             btnCard.Click += delegate { EditSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadData(); };

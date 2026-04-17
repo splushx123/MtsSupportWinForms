@@ -28,23 +28,21 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Статус:", AutoSize = true, Padding = new Padding(8, 9, 0, 0) });
             top.Controls.Add(_cbStatus);
 
-            var btnFind = Theme.CreateSecondaryButton("Найти", 95);
-            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
             var btnAdd = Theme.CreatePrimaryButton("Создать", 100);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 100);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 100);
             var btnAssign = Theme.CreateSecondaryButton("Назначить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 100);
 
-            btnFind.Click += delegate { LoadData(); };
-            btnRefresh.Click += delegate { _txtSearch.Clear(); _cbStatus.SelectedIndex = 0; LoadData(); };
+            _txtSearch.TextChanged += delegate { LoadData(); };
+            _cbStatus.SelectedIndexChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
             btnCard.Click += delegate { EditSelected(); };
             btnAssign.Click += delegate { EditSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnAssign, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnAssign, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadStatuses(); LoadData(); };
