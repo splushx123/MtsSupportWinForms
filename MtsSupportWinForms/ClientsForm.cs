@@ -52,6 +52,7 @@ SELECT client_id AS [Код], fio AS [ФИО], phone AS [Телефон], addres
 FROM Client
 WHERE fio LIKE @search OR phone LIKE @search OR ISNULL(email,'') LIKE @search
 ORDER BY fio", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()

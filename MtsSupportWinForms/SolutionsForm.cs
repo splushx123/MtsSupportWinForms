@@ -52,6 +52,7 @@ FROM Solution s
 LEFT JOIN Employee e ON e.employee_id = s.employee_id
 WHERE s.title LIKE @search OR s.steps LIKE @search OR ISNULL(e.fio,'') LIKE @search
 ORDER BY s.solution_id DESC", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()

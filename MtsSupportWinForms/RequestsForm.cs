@@ -70,6 +70,7 @@ WHERE (c.fio LIKE @search OR ISNULL(r.description,'') LIKE @search)
 ORDER BY r.date_request DESC, r.request_id DESC",
                 new SqlParameter("@search", search),
                 new SqlParameter("@statusId", (object)statusId ?? DBNull.Value));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()

@@ -53,6 +53,7 @@ LEFT JOIN Model m ON m.model_id = e.model_id
 LEFT JOIN Client c ON c.client_id = e.client_id
 WHERE e.serial_number LIKE @search OR ISNULL(m.title_model,'') LIKE @search OR ISNULL(c.fio,'') LIKE @search
 ORDER BY e.equipment_id DESC", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()

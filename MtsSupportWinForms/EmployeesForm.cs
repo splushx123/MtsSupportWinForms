@@ -52,6 +52,7 @@ FROM Employee e
 LEFT JOIN Position p ON p.position_id = e.position_id
 WHERE e.fio LIKE @search OR e.phone LIKE @search OR ISNULL(p.title_position,'') LIKE @search
 ORDER BY e.fio", new SqlParameter("@search", text));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()
