@@ -28,23 +28,19 @@ namespace MtsSupportWinForms
             top.Controls.Add(new Label { Text = "Статус:", AutoSize = true, Padding = new Padding(8, 9, 0, 0) });
             top.Controls.Add(_cbStatus);
 
-            var btnFind = Theme.CreateSecondaryButton("Найти", 95);
-            var btnRefresh = Theme.CreateSecondaryButton("Обновить", 110);
             var btnAdd = Theme.CreatePrimaryButton("Создать", 100);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 100);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 100);
-            var btnAssign = Theme.CreateSecondaryButton("Назначить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 100);
 
-            btnFind.Click += delegate { LoadData(); };
-            btnRefresh.Click += delegate { _txtSearch.Clear(); _cbStatus.SelectedIndex = 0; LoadData(); };
+            _txtSearch.TextChanged += delegate { LoadData(); };
+            _cbStatus.SelectedIndexChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
-            btnCard.Click += delegate { EditSelected(); };
-            btnAssign.Click += delegate { EditSelected(); };
+            btnCard.Click += delegate { OpenCardSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnFind, btnRefresh, btnAdd, btnEdit, btnDelete, btnAssign, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadStatuses(); LoadData(); };
@@ -57,7 +53,8 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var search = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var search = value.Length == 0 ? "%" : value + "%";
             var statusId = UiHelpers.ComboValue(_cbStatus);
             _grid.DataSource = Db.Query(@"
 SELECT r.request_id AS [Код], c.fio AS [Клиент], e.fio AS [Сотрудник], s.title_status AS [Статус],
@@ -71,6 +68,7 @@ WHERE (c.fio LIKE @search OR ISNULL(r.description,'') LIKE @search)
 ORDER BY r.date_request DESC, r.request_id DESC",
                 new SqlParameter("@search", search),
                 new SqlParameter("@statusId", (object)statusId ?? DBNull.Value));
+            if (_grid.Columns.Count > 0) _grid.Columns[0].Visible = false;
         }
 
         private int? SelectedId()
@@ -86,9 +84,16 @@ ORDER BY r.date_request DESC, r.request_id DESC",
             OpenEditor(id.Value);
         }
 
-        private void OpenEditor(int? id)
+        private void OpenCardSelected()
         {
-            using (var form = new RequestEditForm(id, _user.Role))
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            OpenEditor(id.Value, true);
+        }
+
+        private void OpenEditor(int? id, bool readOnlyView = false)
+        {
+            using (var form = new RequestEditForm(id, _user.Role, readOnlyView))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
