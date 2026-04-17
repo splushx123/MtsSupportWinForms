@@ -31,7 +31,6 @@ namespace MtsSupportWinForms
             var btnAdd = Theme.CreatePrimaryButton("Создать", 100);
             var btnEdit = Theme.CreateSecondaryButton("Изменить", 100);
             var btnDelete = Theme.CreateSecondaryButton("Удалить", 100);
-            var btnAssign = Theme.CreateSecondaryButton("Назначить", 110);
             var btnCard = Theme.CreateSecondaryButton("Карточка", 100);
 
             _txtSearch.TextChanged += delegate { LoadData(); };
@@ -39,10 +38,9 @@ namespace MtsSupportWinForms
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
             btnCard.Click += delegate { OpenCardSelected(); };
-            btnAssign.Click += delegate { EditSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
-            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnAssign, btnCard });
+            top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
             Controls.Add(_grid);
             Controls.Add(top);
             Load += delegate { LoadStatuses(); LoadData(); };
