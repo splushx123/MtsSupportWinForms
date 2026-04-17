@@ -9,6 +9,7 @@ namespace MtsSupportWinForms
     {
         private readonly int? _requestId;
         private readonly UserRole _role;
+        private readonly bool _readOnlyView;
 
         private readonly Label _lblId = new Label { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
         private readonly ComboBox _cbClient = Theme.CreateComboBox(340);
@@ -17,10 +18,11 @@ namespace MtsSupportWinForms
         private readonly TextBox _txtDescription = Theme.CreateTextBox(340);
         private readonly DateTimePicker _dtRequest = new DateTimePicker { Width = 340, Format = DateTimePickerFormat.Custom, CustomFormat = "dd.MM.yyyy HH:mm" };
 
-        public RequestEditForm(int? requestId, UserRole role)
+        public RequestEditForm(int? requestId, UserRole role, bool readOnlyView = false)
         {
             _requestId = requestId;
             _role = role;
+            _readOnlyView = readOnlyView;
             Theme.StyleForm(this);
             Text = requestId.HasValue ? "Карточка обращения" : "Новое обращение";
             Width = 700;
@@ -60,7 +62,7 @@ namespace MtsSupportWinForms
             card.Controls.Add(layout);
             Controls.Add(card);
             Controls.Add(buttons);
-            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); };
+            Load += delegate { LoadLookups(); LoadData(); ApplyRole(btnSave); ApplyReadOnly(btnSave); };
         }
 
         private void LoadLookups()
@@ -103,6 +105,17 @@ namespace MtsSupportWinForms
             {
                 _cbClient.Enabled = false;
             }
+        }
+
+        private void ApplyReadOnly(Button btnSave)
+        {
+            if (!_readOnlyView) return;
+            btnSave.Visible = false;
+            _cbClient.Enabled = false;
+            _cbEmployee.Enabled = false;
+            _cbStatus.Enabled = false;
+            _txtDescription.ReadOnly = true;
+            _dtRequest.Enabled = false;
         }
 
         private void Save()

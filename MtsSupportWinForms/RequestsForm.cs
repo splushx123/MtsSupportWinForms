@@ -38,7 +38,7 @@ namespace MtsSupportWinForms
             _cbStatus.SelectedIndexChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
-            btnCard.Click += delegate { EditSelected(); };
+            btnCard.Click += delegate { OpenCardSelected(); };
             btnAssign.Click += delegate { EditSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
@@ -86,9 +86,16 @@ ORDER BY r.date_request DESC, r.request_id DESC",
             OpenEditor(id.Value);
         }
 
-        private void OpenEditor(int? id)
+        private void OpenCardSelected()
         {
-            using (var form = new RequestEditForm(id, _user.Role))
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            OpenEditor(id.Value, true);
+        }
+
+        private void OpenEditor(int? id, bool readOnlyView = false)
+        {
+            using (var form = new RequestEditForm(id, _user.Role, readOnlyView))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {

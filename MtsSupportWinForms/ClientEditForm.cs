@@ -9,16 +9,18 @@ namespace MtsSupportWinForms
     {
         private readonly int? _clientId;
         private readonly UserRole _role;
+        private readonly bool _readOnlyView;
 
         private readonly TextBox _txtFio = Theme.CreateTextBox(360);
         private readonly TextBox _txtPhone = Theme.CreateTextBox(360);
         private readonly TextBox _txtAddress = Theme.CreateTextBox(360);
         private readonly TextBox _txtEmail = Theme.CreateTextBox(360);
 
-        public ClientEditForm(int? clientId, UserRole role)
+        public ClientEditForm(int? clientId, UserRole role, bool readOnlyView = false)
         {
             _clientId = clientId;
             _role = role;
+            _readOnlyView = readOnlyView;
             Theme.StyleForm(this);
             Text = clientId.HasValue ? "Карточка клиента" : "Новый клиент";
             Width = 660;
@@ -56,7 +58,15 @@ namespace MtsSupportWinForms
             Controls.Add(root);
             Load += delegate { LoadData(); };
 
-            if (_role == UserRole.SpecialistLine2)
+            if (_readOnlyView)
+            {
+                _txtFio.ReadOnly = true;
+                _txtPhone.ReadOnly = true;
+                _txtAddress.ReadOnly = true;
+                _txtEmail.ReadOnly = true;
+                btnSave.Visible = false;
+            }
+            else if (_role == UserRole.SpecialistLine2)
             {
                 _txtFio.ReadOnly = true;
                 _txtPhone.ReadOnly = true;

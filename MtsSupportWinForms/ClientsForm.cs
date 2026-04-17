@@ -34,7 +34,7 @@ namespace MtsSupportWinForms
             _txtSearch.TextChanged += delegate { LoadData(); };
             btnAdd.Click += delegate { OpenEditor(null); };
             btnEdit.Click += delegate { EditSelected(); };
-            btnCard.Click += delegate { EditSelected(); };
+            btnCard.Click += delegate { OpenCardSelected(); };
             btnDelete.Click += delegate { DeleteSelected(); };
 
             top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnCard });
@@ -68,9 +68,16 @@ ORDER BY fio", new SqlParameter("@search", text));
             OpenEditor(id.Value);
         }
 
-        private void OpenEditor(int? id)
+        private void OpenCardSelected()
         {
-            using (var form = new ClientEditForm(id, _user.Role))
+            var id = SelectedId();
+            if (!id.HasValue) return;
+            OpenEditor(id.Value, true);
+        }
+
+        private void OpenEditor(int? id, bool readOnlyView = false)
+        {
+            using (var form = new ClientEditForm(id, _user.Role, readOnlyView))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
