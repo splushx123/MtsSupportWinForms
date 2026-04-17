@@ -44,7 +44,8 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var text = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var text = value.Length == 0 ? "%" : value + "%";
             _grid.DataSource = Db.Query(@"
 SELECT e.employee_id AS [Код], e.fio AS [ФИО], e.phone AS [Телефон], p.title_position AS [Должность]
 FROM Employee e

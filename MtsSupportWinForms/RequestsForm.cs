@@ -55,7 +55,8 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var search = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var search = value.Length == 0 ? "%" : value + "%";
             var statusId = UiHelpers.ComboValue(_cbStatus);
             _grid.DataSource = Db.Query(@"
 SELECT r.request_id AS [Код], c.fio AS [Клиент], e.fio AS [Сотрудник], s.title_status AS [Статус],

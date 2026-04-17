@@ -44,7 +44,8 @@ namespace MtsSupportWinForms
 
         private void LoadData()
         {
-            var text = "%" + _txtSearch.Text.Trim() + "%";
+            var value = _txtSearch.Text.Trim();
+            var text = value.Length == 0 ? "%" : value + "%";
             _grid.DataSource = Db.Query(@"
 SELECT e.equipment_id AS [Код], e.serial_number AS [Серийный номер], m.title_model AS [Модель], c.fio AS [Клиент]
 FROM Equipment e
