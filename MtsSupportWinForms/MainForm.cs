@@ -42,7 +42,7 @@ namespace MtsSupportWinForms
             var top = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(24, 16, 24, 14), BackColor = Theme.Surface };
             var title = new Label
             {
-                Text = "Главный модуль администратора",
+                Text = GetMainModuleTitle(),
                 Dock = DockStyle.Top,
                 Height = 30,
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
@@ -50,7 +50,7 @@ namespace MtsSupportWinForms
             };
             var subtitle = new Label
             {
-                Text = "Централизованный доступ к клиентам, обращениям, оборудованию, сотрудникам, решениям, отчетам и журналированию.",
+                Text = GetAccessSubtitle(),
                 Dock = DockStyle.Top,
                 Height = 36,
                 Font = new Font("Segoe UI", 10F),
@@ -161,6 +161,36 @@ namespace MtsSupportWinForms
             FillStats();
         }
 
+
+        private string GetMainModuleTitle()
+        {
+            if (_user.Role == UserRole.Administrator)
+            {
+                return "Главный модуль администратора";
+            }
+
+            if (_user.Role == UserRole.OperatorLine1)
+            {
+                return "Главный модуль оператора 1 линии";
+            }
+
+            return "Оператор 2 линии";
+        }
+
+        private string GetAccessSubtitle()
+        {
+            if (_user.Role == UserRole.Administrator)
+            {
+                return "Доступ к клиентам, обращениям, оборудованию, сотрудникам, решениям, отчетам и журналированию.";
+            }
+
+            if (_user.Role == UserRole.OperatorLine1)
+            {
+                return "Доступ к клиентам и обращениям.";
+            }
+
+            return "Доступ к клиентам, обращениям, оборудованию и решениям.";
+        }
         private int SafeCount(string sql)
         {
             try
