@@ -23,6 +23,8 @@ namespace MtsSupportWinForms
             Width = 620;
             Height = 320;
             StartPosition = FormStartPosition.CenterParent;
+            _txtFio.MaxLength = 120;
+            _txtPhone.MaxLength = 20;
 
             var card = Theme.CreateCard();
             card.Dock = DockStyle.Fill;
@@ -95,6 +97,21 @@ namespace MtsSupportWinForms
             if (string.IsNullOrWhiteSpace(_txtFio.Text) || string.IsNullOrWhiteSpace(_txtPhone.Text) || _cbPosition.SelectedValue == null)
             {
                 MessageBox.Show("Заполните все обязательные поля.");
+                return;
+            }
+            if (!ValidationUtils.IsValidPersonName(_txtFio.Text))
+            {
+                MessageBox.Show("ФИО сотрудника должно содержать только буквы, пробелы или дефис.");
+                return;
+            }
+            if (!ValidationUtils.IsValidPhone(_txtPhone.Text))
+            {
+                MessageBox.Show("Телефон сотрудника введен некорректно.");
+                return;
+            }
+            if (!ValidationUtils.IsValidPhonePlus7(_txtPhone.Text))
+            {
+                MessageBox.Show("Телефон сотрудника должен быть в формате +7XXXXXXXXXX.");
                 return;
             }
 

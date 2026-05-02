@@ -23,6 +23,7 @@ namespace MtsSupportWinForms
             Width = 620;
             Height = 320;
             StartPosition = FormStartPosition.CenterParent;
+            _txtSerial.MaxLength = 64;
 
             var card = Theme.CreateCard();
             card.Dock = DockStyle.Fill;
@@ -98,13 +99,28 @@ namespace MtsSupportWinForms
                 MessageBox.Show("Заполните серийный номер и модель.");
                 return;
             }
+            if (!ValidationUtils.IsValidSerial(_txtSerial.Text))
+            {
+                MessageBox.Show("Серийный номер может содержать только латинские буквы, цифры и символы - _ /.");
+                return;
+            }
+
+            var normalizedSerial = _txtSerial.Text.Trim();
+            var duplicateCount = Db.Count("SELECT COUNT(*) FROM Equipment WHERE serial_number = @serial AND (@id IS NULL OR equipment_id <> @id)",
+                new SqlParameter("@serial", normalizedSerial),
+                new SqlParameter("@id", (object)_equipmentId ?? DBNull.Value));
+            if (duplicateCount > 0)
+            {
+                MessageBox.Show("Оборудование с таким серийным номером уже существует. Укажите уникальный серийный номер.");
+                return;
+            }
 
             try
             {
                 if (_equipmentId.HasValue)
                 {
                     Db.Execute(@"UPDATE Equipment SET serial_number=@serial, model_id=@model_id, client_id=@client_id WHERE equipment_id=@id",
-                        new SqlParameter("@serial", _txtSerial.Text.Trim()),
+                        new SqlParameter("@serial", normalizedSerial),
                         new SqlParameter("@model_id", Convert.ToInt32(_cbModel.SelectedValue)),
                         new SqlParameter("@client_id", (object)UiHelpers.ComboValue(_cbClient) ?? DBNull.Value),
                         new SqlParameter("@id", _equipmentId.Value));
@@ -114,7 +130,7 @@ namespace MtsSupportWinForms
                     var nextId = Db.NextId("Equipment", "equipment_id");
                     Db.Execute(@"INSERT INTO Equipment (equipment_id, serial_number, model_id, client_id) VALUES (@id, @serial, @model_id, @client_id)",
                         new SqlParameter("@id", nextId),
-                        new SqlParameter("@serial", _txtSerial.Text.Trim()),
+                        new SqlParameter("@serial", normalizedSerial),
                         new SqlParameter("@model_id", Convert.ToInt32(_cbModel.SelectedValue)),
                         new SqlParameter("@client_id", (object)UiHelpers.ComboValue(_cbClient) ?? DBNull.Value));
                 }

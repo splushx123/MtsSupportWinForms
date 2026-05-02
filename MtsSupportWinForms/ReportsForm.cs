@@ -134,35 +134,47 @@ ORDER BY s.solution_id DESC");
                 return;
             }
 
-            using (var dialog = new SaveFileDialog())
+            try
             {
-                dialog.Filter = "CSV files|*.csv|Excel files|*.xls|Text files|*.txt|JSON files|*.json";
-                dialog.FileName = "report.csv";
-                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                using (var dialog = new SaveFileDialog())
+                {
+                    dialog.Filter = "CSV files|*.csv|Excel files|*.xls|Text files|*.txt|JSON files|*.json";
+                    dialog.FileName = "report.csv";
+                    if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                    if (string.IsNullOrWhiteSpace(dialog.FileName))
+                    {
+                        MessageBox.Show("Укажите имя файла для экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
 
-                var extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
-                if (extension == ".csv" || extension == ".txt")
-                {
-                    var separator = extension == ".txt" ? "\t" : ";";
-                    var lines = BuildDelimitedLines(separator);
-                    File.WriteAllLines(dialog.FileName, lines, new UTF8Encoding(true));
-                }
-                else if (extension == ".xls")
-                {
-                    File.WriteAllText(dialog.FileName, BuildHtmlTable(), new UTF8Encoding(true));
-                }
-                else if (extension == ".json")
-                {
-                    File.WriteAllText(dialog.FileName, BuildJson(), new UTF8Encoding(true));
-                }
-                else
-                {
-                    MessageBox.Show("Неподдерживаемый формат экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
+                    var extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
+                    if (extension == ".csv" || extension == ".txt")
+                    {
+                        var separator = extension == ".txt" ? "\t" : ";";
+                        var lines = BuildDelimitedLines(separator);
+                        File.WriteAllLines(dialog.FileName, lines, new UTF8Encoding(true));
+                    }
+                    else if (extension == ".xls")
+                    {
+                        File.WriteAllText(dialog.FileName, BuildHtmlTable(), new UTF8Encoding(true));
+                    }
+                    else if (extension == ".json")
+                    {
+                        File.WriteAllText(dialog.FileName, BuildJson(), new UTF8Encoding(true));
+                    }
+                    else
+                    {
+                        MessageBox.Show("Неподдерживаемый формат экспорта.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
 
-                LogService.Log("Экспорт отчета", dialog.FileName);
-                MessageBox.Show("Экспорт завершен.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LogService.Log("Экспорт отчета", dialog.FileName);
+                    MessageBox.Show("Экспорт завершен.", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось выполнить экспорт.\n" + ex.Message, "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
