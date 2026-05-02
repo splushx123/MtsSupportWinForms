@@ -99,6 +99,11 @@ namespace MtsSupportWinForms
                 MessageBox.Show("Заполните серийный номер и модель.");
                 return;
             }
+            if (!_equipmentId.HasValue && UiHelpers.ComboValue(_cbClient) == null)
+            {
+                MessageBox.Show("При добавлении нового оборудования необходимо выбрать клиента.");
+                return;
+            }
             if (!ValidationUtils.IsValidSerial(_txtSerial.Text))
             {
                 MessageBox.Show("Серийный номер может содержать только латинские буквы, цифры и символы - _ /.");
