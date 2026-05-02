@@ -23,6 +23,7 @@ namespace MtsSupportWinForms
             Width = 620;
             Height = 320;
             StartPosition = FormStartPosition.CenterParent;
+            _txtSerial.MaxLength = 64;
 
             var card = Theme.CreateCard();
             card.Dock = DockStyle.Fill;
@@ -96,6 +97,11 @@ namespace MtsSupportWinForms
             if (string.IsNullOrWhiteSpace(_txtSerial.Text) || _cbModel.SelectedValue == null)
             {
                 MessageBox.Show("Заполните серийный номер и модель.");
+                return;
+            }
+            if (!ValidationUtils.IsValidSerial(_txtSerial.Text))
+            {
+                MessageBox.Show("Серийный номер может содержать только латинские буквы, цифры и символы - _ /.");
                 return;
             }
 

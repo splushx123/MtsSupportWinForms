@@ -24,6 +24,8 @@ namespace MtsSupportWinForms
             Height = 400;
             StartPosition = FormStartPosition.CenterParent;
             _txtSteps.Multiline = true;
+            _txtTitle.MaxLength = 200;
+            _txtSteps.MaxLength = 4000;
             _txtSteps.Height = 150;
 
             var card = Theme.CreateCard();
@@ -97,6 +99,16 @@ namespace MtsSupportWinForms
             if (string.IsNullOrWhiteSpace(_txtTitle.Text) || string.IsNullOrWhiteSpace(_txtSteps.Text) || _cbEmployee.SelectedValue == null)
             {
                 MessageBox.Show("Заполните все поля решения.");
+                return;
+            }
+            if (_txtTitle.Text.Trim().Length < 5)
+            {
+                MessageBox.Show("Заголовок решения должен содержать не менее 5 символов.");
+                return;
+            }
+            if (_txtSteps.Text.Trim().Length < 15)
+            {
+                MessageBox.Show("Шаги решения должны содержать не менее 15 символов.");
                 return;
             }
 

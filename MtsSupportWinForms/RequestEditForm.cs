@@ -28,6 +28,7 @@ namespace MtsSupportWinForms
             Height = 430;
             StartPosition = FormStartPosition.CenterParent;
             _txtDescription.Multiline = true;
+            _txtDescription.MaxLength = 2000;
             _txtDescription.Height = 110;
 
             var card = Theme.CreateCard();
@@ -122,6 +123,16 @@ namespace MtsSupportWinForms
             if (_cbClient.SelectedValue == null || _cbStatus.SelectedValue == null || string.IsNullOrWhiteSpace(_txtDescription.Text))
             {
                 MessageBox.Show("Заполните обязательные поля обращения.");
+                return;
+            }
+            if (_txtDescription.Text.Trim().Length < 10)
+            {
+                MessageBox.Show("Описание обращения должно содержать не менее 10 символов.");
+                return;
+            }
+            if (ValidationUtils.IsFutureDate(_dtRequest.Value))
+            {
+                MessageBox.Show("Дата обращения не может быть в будущем.");
                 return;
             }
 
