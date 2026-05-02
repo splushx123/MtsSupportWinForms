@@ -22,7 +22,7 @@ namespace MtsSupportWinForms
             }
             if (email == Read("EngineerEmail"))
             {
-                return new UserAccount { Email = email, FullName = "Специалист 2 линии", Role = UserRole.SpecialistLine2 };
+                return new UserAccount { Email = email, FullName = "Оператор 2 линии", Role = UserRole.SpecialistLine2 };
             }
 
             return null;
