@@ -21,6 +21,7 @@ namespace MtsSupportWinForms
             Height = 680;
             StartPosition = FormStartPosition.CenterParent;
             Theme.StyleGrid(_grid);
+            _txtSearch.MaxLength = 100;
 
             var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 60, Padding = new Padding(10), BackColor = Color.White };
             top.Controls.Add(new Label { Text = "Поиск:", AutoSize = true, Padding = new Padding(0, 9, 0, 0) });
@@ -54,6 +55,11 @@ namespace MtsSupportWinForms
         private void LoadData()
         {
             var value = _txtSearch.Text.Trim();
+            if (!ValidationUtils.IsValidSearchText(value))
+            {
+                MessageBox.Show("Поисковая строка содержит недопустимые символы.", "Поиск", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             var search = value.Length == 0 ? "%" : value + "%";
             var statusId = UiHelpers.ComboValue(_cbStatus);
             _grid.DataSource = Db.Query(@"

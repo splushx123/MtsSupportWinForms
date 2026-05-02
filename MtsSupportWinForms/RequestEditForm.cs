@@ -28,6 +28,7 @@ namespace MtsSupportWinForms
             Height = 430;
             StartPosition = FormStartPosition.CenterParent;
             _txtDescription.Multiline = true;
+            _txtDescription.MaxLength = 2000;
             _txtDescription.Height = 110;
 
             var card = Theme.CreateCard();
@@ -119,9 +120,25 @@ namespace MtsSupportWinForms
 
         private void Save()
         {
-            if (_cbClient.SelectedValue == null || _cbStatus.SelectedValue == null || string.IsNullOrWhiteSpace(_txtDescription.Text))
+            var statusId = UiHelpers.ComboValue(_cbStatus);
+            if (_cbClient.SelectedValue == null || string.IsNullOrWhiteSpace(_txtDescription.Text))
             {
                 MessageBox.Show("Заполните обязательные поля обращения.");
+                return;
+            }
+            if (_requestId.HasValue && !statusId.HasValue)
+            {
+                MessageBox.Show("Для существующего обращения должен быть указан статус.");
+                return;
+            }
+            if (_txtDescription.Text.Trim().Length < 10)
+            {
+                MessageBox.Show("Описание обращения должно содержать не менее 10 символов.");
+                return;
+            }
+            if (ValidationUtils.IsFutureDate(_dtRequest.Value))
+            {
+                MessageBox.Show("Дата обращения не может быть в будущем.");
                 return;
             }
 
@@ -132,7 +149,7 @@ namespace MtsSupportWinForms
                     Db.Execute(@"UPDATE Request SET client_id=@client_id, employee_id=@employee_id, status_id=@status_id, description=@description, date_request=@date_request WHERE request_id=@id",
                         new SqlParameter("@client_id", Convert.ToInt32(_cbClient.SelectedValue)),
                         new SqlParameter("@employee_id", (object)UiHelpers.ComboValue(_cbEmployee) ?? DBNull.Value),
-                        new SqlParameter("@status_id", Convert.ToInt32(_cbStatus.SelectedValue)),
+                        new SqlParameter("@status_id", statusId.Value),
                         new SqlParameter("@description", _txtDescription.Text.Trim()),
                         new SqlParameter("@date_request", _dtRequest.Value),
                         new SqlParameter("@id", _requestId.Value));
@@ -140,7 +157,7 @@ namespace MtsSupportWinForms
                 else
                 {
                     var nextId = Db.NextId("Request", "request_id");
-                    var defaultStatusId = UiHelpers.ComboValue(_cbStatus);
+                    var defaultStatusId = statusId;
                     if (!defaultStatusId.HasValue)
                     {
                         defaultStatusId = GetInWorkStatusId();

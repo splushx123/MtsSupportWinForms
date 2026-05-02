@@ -86,9 +86,9 @@ namespace MtsSupportWinForms
             }
         }
 
-        public static int Count(string sql)
+        public static int Count(string sql, params SqlParameter[] parameters)
         {
-            return Convert.ToInt32(Scalar(sql));
+            return Convert.ToInt32(Scalar(sql, parameters));
         }
 
         private static string ShortSql(string sql)
