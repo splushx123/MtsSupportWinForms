@@ -109,6 +109,11 @@ namespace MtsSupportWinForms
                 MessageBox.Show("Телефон сотрудника введен некорректно.");
                 return;
             }
+            if (!ValidationUtils.IsValidPhonePlus7(_txtPhone.Text))
+            {
+                MessageBox.Show("Телефон сотрудника должен быть в формате +7XXXXXXXXXX.");
+                return;
+            }
 
             try
             {

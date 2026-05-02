@@ -26,6 +26,12 @@ namespace MtsSupportWinForms
         }
 
         public static bool IsValidPhone(string phone) => !string.IsNullOrWhiteSpace(phone) && PhoneRegex.IsMatch(phone.Trim());
+        public static bool IsValidPhonePlus7(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return false;
+            var digits = Regex.Replace(phone, @"\D", string.Empty);
+            return digits.Length == 11 && digits.StartsWith("7");
+        }
         public static bool IsValidPersonName(string fio) => !string.IsNullOrWhiteSpace(fio) && NameRegex.IsMatch(fio.Trim());
         public static bool IsValidSerial(string serial) => !string.IsNullOrWhiteSpace(serial) && SerialRegex.IsMatch(serial.Trim());
 

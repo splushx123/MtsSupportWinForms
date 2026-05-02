@@ -113,6 +113,11 @@ namespace MtsSupportWinForms
                 MessageBox.Show("Телефон должен содержать только цифры и символы + ( ) -.");
                 return;
             }
+            if (!ValidationUtils.IsValidPhonePlus7(_txtPhone.Text))
+            {
+                MessageBox.Show("Телефон клиента должен быть в формате +7XXXXXXXXXX.");
+                return;
+            }
             if (!string.IsNullOrWhiteSpace(_txtEmail.Text) && !ValidationUtils.IsValidEmail(_txtEmail.Text))
             {
                 MessageBox.Show("Укажите корректный e-mail клиента.");
