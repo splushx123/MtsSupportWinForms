@@ -23,6 +23,7 @@ namespace MtsSupportWinForms
             MaximizeBox = false;
             MinimizeBox = false;
             ClientSize = new Size(920, 520);
+            _txtEmail.MaxLength = 120;
 
             var left = new Panel { Dock = DockStyle.Left, Width = 360, BackColor = Theme.Sidebar, Padding = new Padding(34) };
             var appName = new Label
@@ -75,7 +76,7 @@ namespace MtsSupportWinForms
 
             var hint = new Label
             {
-                Text = "Пример e-mail адресов для входа задается в App.config: admin, operator и engineer.",
+                Text = "Пример e-mail адресов для входа задается в App.config: admin, operator (оператор 1 линии) и engineer (оператор 2 линии).",
                 AutoSize = true,
                 ForeColor = Theme.Muted,
                 MaximumSize = new Size(360, 0)
@@ -131,7 +132,20 @@ namespace MtsSupportWinForms
 
         private void DoLogin()
         {
-            CurrentUser = AuthService.Authenticate(_txtEmail.Text);
+            _lblError.Text = string.Empty;
+            var email = (_txtEmail.Text ?? string.Empty).Trim();
+            if (email.Length == 0)
+            {
+                _lblError.Text = "Введите e-mail пользователя.";
+                return;
+            }
+            if (!ValidationUtils.IsValidEmail(email))
+            {
+                _lblError.Text = "Введите корректный e-mail адрес.";
+                return;
+            }
+
+            CurrentUser = AuthService.Authenticate(email);
             if (CurrentUser == null)
             {
                 _lblError.Text = "Указанный e-mail не найден в списке учетных записей приложения.";

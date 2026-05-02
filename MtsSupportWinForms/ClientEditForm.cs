@@ -26,6 +26,10 @@ namespace MtsSupportWinForms
             Width = 660;
             Height = 360;
             StartPosition = FormStartPosition.CenterParent;
+            _txtFio.MaxLength = 120;
+            _txtPhone.MaxLength = 20;
+            _txtAddress.MaxLength = 250;
+            _txtEmail.MaxLength = 120;
 
             var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12) };
             var card = Theme.CreateCard();
@@ -97,6 +101,21 @@ namespace MtsSupportWinForms
             if (string.IsNullOrWhiteSpace(_txtFio.Text) || string.IsNullOrWhiteSpace(_txtPhone.Text))
             {
                 MessageBox.Show("Заполните обязательные поля: ФИО и телефон.");
+                return;
+            }
+            if (!ValidationUtils.IsValidPersonName(_txtFio.Text))
+            {
+                MessageBox.Show("ФИО должно содержать только буквы, пробелы или дефис.");
+                return;
+            }
+            if (!ValidationUtils.IsValidPhone(_txtPhone.Text))
+            {
+                MessageBox.Show("Телефон должен содержать только цифры и символы + ( ) -.");
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(_txtEmail.Text) && !ValidationUtils.IsValidEmail(_txtEmail.Text))
+            {
+                MessageBox.Show("Укажите корректный e-mail клиента.");
                 return;
             }
 
