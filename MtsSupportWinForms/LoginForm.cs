@@ -75,7 +75,7 @@ namespace MtsSupportWinForms
 
             var hint = new Label
             {
-                Text = "Пример e-mail адресов для входа задается в App.config: admin, operator и engineer.",
+                Text = "Пример e-mail адресов для входа задается в App.config: admin, operator (оператор 1 линии) и engineer (оператор 2 линии).",
                 AutoSize = true,
                 ForeColor = Theme.Muted,
                 MaximumSize = new Size(360, 0)
